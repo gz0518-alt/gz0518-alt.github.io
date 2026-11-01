@@ -1,0 +1,995 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>聽音背單字</title>
+<meta name="theme-color" content="#1f6f6b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="聽音單字">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{
+  --bg:#fbf6ec; --card:#ffffff; --ink:#23302f; --muted:#6b7775; --line:#e7dfcf;
+  --brand:#1f6f6b; --brand-ink:#ffffff; --brand-soft:#d9eeec;
+  --accent:#f08a3c; --accent-soft:#fde6d3;
+  --good:#2f9e5b; --good-soft:#dcf3e5; --bad:#d64545; --bad-soft:#fbe0e0;
+  --hl:#ffd54a; --shadow:0 2px 0 rgba(0,0,0,.06),0 6px 18px rgba(31,60,58,.08);
+  --r:18px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#152120; --card:#1e2d2c; --ink:#eef4f2; --muted:#9fb0ad; --line:#2d403e;
+    --brand:#3fb3ab; --brand-ink:#0d1a19; --brand-soft:#21423f;
+    --accent:#f5a160; --accent-soft:#4a3322;
+    --good:#4cc47e; --good-soft:#1f3d2b; --bad:#ef6b6b; --bad-soft:#4a2424;
+    --hl:#e0b520; --shadow:0 2px 0 rgba(0,0,0,.25),0 6px 18px rgba(0,0,0,.25);
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+  font-size:18px;line-height:1.5;min-height:100vh;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+#app{max-width:680px;margin:0 auto;padding:16px 16px 40px}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touch-action:manipulation}
+input,textarea,select{font:inherit;color:var(--ink)}
+h1{font-size:28px;margin:8px 0 4px;letter-spacing:.5px}
+h2{font-size:22px;margin:0 0 8px}
+.muted{color:var(--muted)}
+.small{font-size:15px}
+.row{display:flex;gap:10px;align-items:center}
+.wrap{flex-wrap:wrap}
+.grow{flex:1}
+.center{text-align:center}
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:18px;margin:14px 0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:56px;padding:12px 22px;border-radius:16px;
+  font-weight:700;font-size:19px;background:var(--brand-soft);color:var(--ink);box-shadow:0 3px 0 rgba(0,0,0,.08)}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.08)}
+.btn.primary{background:var(--brand);color:var(--brand-ink)}
+.btn.accent{background:var(--accent);color:#fff}
+.btn.danger{background:var(--bad-soft);color:var(--bad)}
+.btn.block{display:flex;width:100%}
+.btn.small{min-height:44px;padding:8px 14px;font-size:16px;border-radius:12px}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.iconbtn{min-width:48px;min-height:48px;border-radius:14px;font-size:22px;display:inline-flex;align-items:center;justify-content:center}
+.topbar{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.topbar .title{flex:1;font-weight:700;font-size:18px}
+.progress{height:10px;background:var(--line);border-radius:99px;overflow:hidden;margin:6px 0 14px}
+.progress>i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .3s}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:12px;text-align:center}
+.stat b{display:block;font-size:26px}
+.stat span{font-size:14px;color:var(--muted)}
+.menu{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.menu .btn{flex-direction:column;gap:2px;min-height:84px;font-size:16px;background:var(--card);box-shadow:var(--shadow)}
+.menu .btn em{font-style:normal;font-size:28px}
+.hero{background:var(--brand);color:var(--brand-ink);border-radius:24px;padding:22px;margin:14px 0;box-shadow:var(--shadow)}
+.hero .big{font-size:44px;font-weight:800;line-height:1.1}
+.hero .btn{background:var(--brand-ink);color:var(--brand);margin-top:14px}
+.hero .btn.ghost{background:transparent;color:var(--brand-ink);box-shadow:none;border:2px solid currentColor;margin-left:0}
+.banner{background:var(--accent-soft);border-radius:16px;padding:12px 14px;margin:10px 0;font-size:16px;display:flex;gap:10px;align-items:flex-start}
+.speaker{width:132px;height:132px;border-radius:50%;background:var(--brand);color:var(--brand-ink);font-size:56px;
+  display:flex;align-items:center;justify-content:center;margin:10px auto 6px;box-shadow:0 6px 0 rgba(0,0,0,.12)}
+.speaker:active{transform:translateY(3px);box-shadow:0 3px 0 rgba(0,0,0,.12)}
+.speaker.playing{animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.prompt{text-align:center;font-size:20px;font-weight:700;margin:6px 0 14px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.opt{min-height:76px;border-radius:18px;background:var(--card);box-shadow:var(--shadow);font-size:21px;font-weight:700;padding:10px;border:3px solid transparent}
+.opt.good{background:var(--good-soft);border-color:var(--good)}
+.opt.bad{background:var(--bad-soft);border-color:var(--bad)}
+.word{font-size:44px;font-weight:800;letter-spacing:1px;text-align:center;margin:4px 0;word-break:break-word}
+.syl{display:flex;justify-content:center;flex-wrap:wrap;gap:6px;margin:6px 0}
+.syl span{font-size:34px;font-weight:800;padding:4px 12px;border-radius:12px;background:var(--brand-soft);transition:background .12s,transform .12s}
+.syl span.on{background:var(--hl);transform:scale(1.12)}
+.syl.dots span{background:transparent;padding:0 2px;font-size:22px;font-weight:700;color:var(--muted)}
+.zh{text-align:center;font-size:22px;font-weight:700}
+.pos{display:inline-block;font-size:14px;color:var(--brand);background:var(--brand-soft);border-radius:8px;padding:0 8px;margin-right:6px;vertical-align:middle}
+.ex{border-top:1px dashed var(--line);padding:12px 0 4px;display:flex;gap:10px;align-items:flex-start}
+.ex .use{display:inline-block;font-size:13px;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:8px;padding:1px 8px;margin-bottom:4px}
+.ex .en{font-size:19px}
+.ex .en b{color:var(--brand);text-decoration:underline;text-decoration-thickness:3px;text-underline-offset:3px}
+.ex .zhs{font-size:16px;color:var(--muted)}
+.slots{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin:16px 0}
+.slot{min-width:70px;min-height:60px;border-radius:14px;border:3px dashed var(--line);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;padding:0 10px;transition:background .12s}
+.slot.filled{border-style:solid;border-color:var(--good);background:var(--good-soft)}
+.slot.on{background:var(--hl)}
+.tiles{display:flex;justify-content:center;flex-wrap:wrap;gap:12px;margin:10px 0}
+.tile{min-width:78px;min-height:64px;padding:0 16px;border-radius:16px;background:var(--card);box-shadow:var(--shadow);font-size:28px;font-weight:800;border:3px solid transparent}
+.tile.used{opacity:.25;pointer-events:none}
+.tile.hint{border-color:var(--accent);animation:pulse 1s infinite}
+.shake{animation:shake .35s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.dict{width:100%;font-size:34px;font-weight:800;text-align:center;padding:14px;border-radius:16px;border:3px solid var(--line);background:var(--card);letter-spacing:2px}
+.dict:focus{outline:none;border-color:var(--brand)}
+.letters{display:flex;justify-content:center;flex-wrap:wrap;gap:4px;margin:10px 0;font-size:30px;font-weight:800;letter-spacing:1px}
+.letters span{min-width:26px;text-align:center;border-bottom:3px solid var(--line)}
+.letters .g{color:var(--good);border-color:var(--good)}
+.letters .x{color:var(--bad);border-color:var(--bad)}
+.feedback{text-align:center;font-size:20px;font-weight:800;margin:10px 0;min-height:30px}
+.feedback.good{color:var(--good)}
+.feedback.bad{color:var(--bad)}
+.list .item{display:flex;align-items:center;gap:10px;padding:12px 4px;border-bottom:1px solid var(--line)}
+.list .item:last-child{border-bottom:0}
+.list .w{font-weight:800;font-size:20px}
+.lvl{font-size:13px;border-radius:8px;padding:2px 8px;white-space:nowrap}
+.lvl.l0{background:var(--accent-soft);color:var(--accent)}
+.lvl.l1{background:var(--brand-soft);color:var(--brand)}
+.lvl.l2{background:var(--good-soft);color:var(--good)}
+.field{display:block;margin:12px 0}
+.field>span{display:block;font-size:15px;color:var(--muted);margin-bottom:4px}
+.text{width:100%;padding:12px 14px;border-radius:14px;border:2px solid var(--line);background:var(--card);font-size:18px}
+textarea.text{min-height:110px;font-size:15px;font-family:ui-monospace,Menlo,monospace}
+select.text{appearance:auto}
+input[type=range]{width:100%;accent-color:var(--brand)}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:flex-end;justify-content:center;z-index:20;padding:env(safe-area-inset-top) 0 0}
+.sheet{background:var(--bg);width:100%;max-width:680px;max-height:90vh;overflow:auto;border-radius:24px 24px 0 0;padding:16px 16px calc(24px + env(safe-area-inset-bottom))}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:14px;font-size:16px;z-index:30;max-width:90vw;text-align:center}
+.stars{font-size:48px;text-align:center;margin:8px 0}
+.intro{text-align:center;padding:30px 10px}
+.intro .emoji{font-size:72px}
+.tag{display:inline-block;background:var(--brand-soft);color:var(--brand);font-weight:700;border-radius:99px;padding:2px 12px;font-size:14px}
+@media (min-width:700px){
+  body{font-size:20px}
+  .word{font-size:56px}
+  .opt{min-height:96px;font-size:24px}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+'use strict';
+/* ========== 小工具 ========== */
+const $ = s => document.querySelector(s);
+function h(tag, attrs, ...kids){
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})){
+    if (v == null || v === false) continue;
+    if (k === 'class') e.className = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else if (k === 'value') e.value = v;
+    else if (v === true) e.setAttribute(k, '');
+    else e.setAttribute(k, v);
+  }
+  for (const c of kids.flat(Infinity)){
+    if (c == null || c === false) continue;
+    e.append(c.nodeType ? c : document.createTextNode(String(c)));
+  }
+  return e;
+}
+const app = $('#app');
+function show(view){ closeSheet(); app.replaceChildren(view); window.scrollTo(0, 0); }
+function shuffle(a){ for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+let toastTimer;
+function toast(msg){
+  document.querySelectorAll('.toast').forEach(t => t.remove());
+  const t = h('div', {class:'toast'}, msg); document.body.append(t);
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.remove(), 2600);
+}
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isStandalone = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+
+/* ========== 日期 ========== */
+function ymd(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+const today = () => ymd(new Date());
+function addDays(n){ const d = new Date(); d.setDate(d.getDate() + n); return ymd(d); }
+const INTERVAL = [0, 1, 2, 4, 7, 14, 30]; // 每一級的複習間隔（天）
+
+/* ========== 存檔 ========== */
+const KEY = 'vocab-v1';
+function defaults(){
+  return { v:1, name:'', words:{}, stars:0, streak:{last:'', count:0}, daily:{date:'', newDone:0},
+    session:null, hideInstall:false,
+    settings:{ rate:0.9, newPerDay:8, sessionMax:12, voice:'', sfx:true } };
+}
+function load(){
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw){
+      const o = JSON.parse(raw), d = defaults();
+      return Object.assign(d, o, { settings: Object.assign(d.settings, o.settings || {}) });
+    }
+  } catch (e) {}
+  return defaults();
+}
+let S = load();
+function save(){
+  try { localStorage.setItem(KEY, JSON.stringify(S)); }
+  catch (e) { toast('存檔失敗，可能是裝置空間不足'); }
+}
+if (navigator.storage && navigator.storage.persist) { navigator.storage.persist().catch(() => {}); }
+
+/* ========== 發音 ========== */
+let voices = [];
+function loadVoices(){
+  if (!('speechSynthesis' in window)) return;
+  voices = speechSynthesis.getVoices().filter(v => /^en/i.test(v.lang));
+}
+if ('speechSynthesis' in window){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+function pickVoice(){
+  if (S.settings.voice){ const v = voices.find(v => v.voiceURI === S.settings.voice); if (v) return v; }
+  const prefs = ['Samantha', 'Ava', 'Allison', 'Susan', 'Nicky', 'Google US English', 'Microsoft Aria', 'Microsoft Jenny'];
+  for (const p of prefs){ const v = voices.find(v => v.name.includes(p) && /en[-_]US/i.test(v.lang)); if (v) return v; }
+  return voices.find(v => /en[-_]US/i.test(v.lang)) || voices[0] || null;
+}
+let curUtt = null;
+function speak(text, opt = {}){
+  const { rate = 1, onstart, onend } = opt;
+  if (!('speechSynthesis' in window)){ toast('這台裝置不支援發音'); onend && onend(); return; }
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  const v = pickVoice();
+  if (v){ u.voice = v; u.lang = v.lang; } else u.lang = 'en-US';
+  u.rate = Math.max(0.3, Math.min(1.5, S.settings.rate * rate));
+  let started = false;
+  u.onstart = () => { started = true; onstart && onstart(); };
+  u.onend = u.onerror = () => { if (curUtt === u) curUtt = null; onend && onend(); };
+  curUtt = u;
+  speechSynthesis.speak(u);
+  return { get started(){ return started; } };
+}
+const plain = s => s.replace(/\*/g, '');
+/* 放慢念整個字，同時讓音節依序亮起 */
+let hlTimers = [];
+function speakHighlight(word, chunks, onIdx, rate = 0.6){
+  hlTimers.forEach(clearTimeout); hlTimers = [];
+  const eff = S.settings.rate * rate;
+  const total = (0.2 + 0.33 * chunks.length) / eff * 1000;
+  const lens = chunks.map(c => Math.max(1, c.length));
+  const sum = lens.reduce((a, b) => a + b, 0);
+  let fired = false;
+  const run = () => {
+    if (fired) return; fired = true;
+    let t = 0;
+    chunks.forEach((c, i) => { hlTimers.push(setTimeout(() => onIdx(i), t)); t += total * lens[i] / sum; });
+    hlTimers.push(setTimeout(() => onIdx(-1), t + 250));
+  };
+  speak(word, { rate, onstart: run, onend: () => { if (!fired) run(); } });
+  hlTimers.push(setTimeout(run, 700)); // 有些瀏覽器不觸發 onstart
+}
+
+/* ========== 音效 ========== */
+let actx = null;
+function sfx(ok){
+  if (!S.settings.sfx) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === 'suspended') actx.resume();
+    const notes = ok ? [660, 990] : [220, 180];
+    notes.forEach((f, i) => {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = ok ? 'sine' : 'square'; o.frequency.value = f;
+      const t = actx.currentTime + i * 0.11;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(ok ? 0.25 : 0.08, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+      o.connect(g).connect(actx.destination); o.start(t); o.stop(t + 0.2);
+    });
+  } catch (e) {}
+}
+
+/* ========== 單字資料 ========== */
+const LEVEL = b => b === 0 ? ['新字', 'l0'] : b <= 3 ? ['學習中', 'l1'] : ['學會了', 'l2'];
+function chunksOf(w){
+  const word = w.w;
+  let c = Array.isArray(w.s) && w.s.length ? w.s.filter(Boolean) : [word];
+  if (c.join('').toLowerCase() !== word.toLowerCase()) c = [word];
+  if (c.length === 1){
+    if (word.length <= 1) c = [word];
+    else if (word.length <= 4) c = word.split('');
+    else c = [word[0], word.slice(1)];
+  }
+  return c;
+}
+function emph(sentence){ // *字* → 粗體
+  const out = []; const parts = sentence.split('*');
+  parts.forEach((p, i) => { if (!p) return; out.push(i % 2 ? h('b', null, p) : document.createTextNode(p)); });
+  return out;
+}
+function wordCard(w, opt = {}){
+  const chunks = chunksOf(w);
+  const sylEl = h('div', {class:'syl dots'}, chunks.flatMap((c, i) => i ? [h('span', null, '·'), h('span', null, c)] : [h('span', null, c)]));
+  return h('div', {class:'card'},
+    h('div', {class:'row', style:'justify-content:center'},
+      h('div', {class:'word'}, w.w),
+      h('button', {class:'iconbtn', 'aria-label':'播放', onclick: () => speak(w.w)}, '🔊')),
+    h('div', {class:'row', style:'justify-content:center;gap:4px'}, sylEl,
+      h('button', {class:'iconbtn small', 'aria-label':'慢速', style:'font-size:20px', onclick: () => speak(w.w, {rate:0.6})}, '🐢')),
+    h('div', {class:'zh'}, w.pos ? h('span', {class:'pos'}, w.pos) : null, w.zh),
+    opt.noEx ? null : (w.ex || []).map(ex => h('div', {class:'ex'},
+      h('div', {class:'grow'},
+        ex.use ? h('span', {class:'use'}, ex.use) : null,
+        h('div', {class:'en'}, emph(ex.en || '')),
+        ex.zh ? h('div', {class:'zhs'}, ex.zh) : null),
+      h('button', {class:'iconbtn', 'aria-label':'播放例句', onclick: () => speak(plain(ex.en || ''), {rate:0.9})}, '🔊')))
+  );
+}
+
+/* ========== 排今天的練習 ========== */
+function resetDaily(){ const t = today(); if (S.daily.date !== t) S.daily = { date:t, newDone:0 }; }
+function planToday(){
+  resetDaily();
+  const t = today(), all = Object.values(S.words);
+  const due = all.filter(w => w.box > 0 && w.due <= t).sort((a, b) => a.due < b.due ? -1 : a.due > b.due ? 1 : a.box - b.box);
+  const fresh = all.filter(w => w.box === 0).sort((a, b) => a.added - b.added);
+  const max = S.settings.sessionMax;
+  const newLeft = Math.max(0, S.settings.newPerDay - S.daily.newDone);
+  const pickDue = due.slice(0, max);
+  const pickNew = fresh.slice(0, Math.max(0, Math.min(newLeft, max - pickDue.length)));
+  return { due: pickDue, fresh: pickNew, freshTotal: fresh.length };
+}
+function planExtra(){
+  const all = Object.values(S.words);
+  const learned = all.filter(w => w.box > 0).sort((a, b) => a.box - b.box || (a.due < b.due ? -1 : 1));
+  const pick = learned.slice(0, S.settings.sessionMax);
+  if (pick.length) return pick;
+  return all.filter(w => w.box === 0).sort((a, b) => a.added - b.added).slice(0, S.settings.sessionMax);
+}
+
+/* ========== 首頁 ========== */
+function renderHome(){
+  if (!S.name) return renderWelcome();
+  const plan = planToday();
+  const all = Object.values(S.words);
+  const n = all.length;
+  const known = all.filter(w => w.box >= 4).length;
+  const learning = all.filter(w => w.box >= 1 && w.box <= 3).length;
+  const todayN = plan.due.length + plan.fresh.length;
+  const streak = (S.streak.last === today() || S.streak.last === addDays(-1)) ? S.streak.count : 0;
+
+  let hero;
+  if (S.session){
+    hero = h('div', {class:'hero'},
+      h('div', null, '上次的練習還沒做完'),
+      h('div', {class:'big'}, `第 ${S.session.round} 關`),
+      h('div', {class:'row wrap'},
+        h('button', {class:'btn', onclick: renderSession}, '▶ 繼續練習'),
+        h('button', {class:'btn ghost', onclick: () => { if (confirm('放棄這次的練習嗎？已經答過的字會保留成績。')){ S.session = null; save(); renderHome(); } }}, '放棄')));
+  } else if (n === 0){
+    hero = h('div', {class:'hero'},
+      h('div', {class:'big'}, '還沒有單字'),
+      h('div', null, '先匯入單字包，或用範例試試看。'),
+      h('div', {class:'row wrap'},
+        h('button', {class:'btn', onclick: renderImport}, '📥 匯入單字'),
+        h('button', {class:'btn ghost', onclick: () => previewPack(DEMO)}, '試試範例')));
+  } else if (todayN > 0){
+    hero = h('div', {class:'hero'},
+      h('div', null, '今天要練'),
+      h('div', {class:'big'}, `${todayN} 個字`),
+      h('div', {class:'small'}, `複習 ${plan.due.length}・新字 ${plan.fresh.length}`),
+      h('button', {class:'btn block', onclick: () => startSession([...plan.due, ...plan.fresh].map(w => w.id), false)}, '開始練習 →'));
+  } else {
+    hero = h('div', {class:'hero'},
+      h('div', {class:'big'}, '今天完成了 🎉'),
+      h('div', {class:'small'}, plan.freshTotal ? `還有 ${plan.freshTotal} 個新字，明天繼續。` : '單字都練過了，可以匯入新的單字包。'),
+      h('button', {class:'btn block', onclick: () => startSession(planExtra().map(w => w.id), true)}, '再多練幾個'));
+  }
+
+  const showInstall = isIOS && !isStandalone() && !S.hideInstall;
+  show(h('div', null,
+    h('div', {class:'row'},
+      h('h1', {class:'grow'}, `嗨，${S.name}！`),
+      h('span', {class:'tag'}, `⭐ ${S.stars}`),
+      streak ? h('span', {class:'tag', style:'background:var(--accent-soft);color:var(--accent)'}, `🔥 ${streak} 天`) : null),
+    showInstall ? h('div', {class:'banner'},
+      h('div', {class:'grow'}, '📲 加到主畫面就能離線使用：點 Safari 的「分享」按鈕 → 「加入主畫面」。'),
+      h('button', {class:'iconbtn', 'aria-label':'關閉', onclick: () => { S.hideInstall = true; save(); renderHome(); }}, '✕')) : null,
+    hero,
+    h('div', {class:'stats'},
+      h('div', {class:'stat'}, h('b', null, known), h('span', null, '學會了')),
+      h('div', {class:'stat'}, h('b', null, learning), h('span', null, '學習中')),
+      h('div', {class:'stat'}, h('b', null, n - known - learning), h('span', null, '新字'))),
+    h('div', {class:'menu'},
+      h('button', {class:'btn', onclick: renderBook}, h('em', null, '📒'), '單字本'),
+      h('button', {class:'btn', onclick: renderImport}, h('em', null, '📥'), '匯入單字'),
+      h('button', {class:'btn', onclick: renderSettings}, h('em', null, '⚙️'), '設定'))
+  ));
+}
+function renderWelcome(){
+  const inp = h('input', {class:'text', placeholder:'例如：小明', maxlength:'12'});
+  const go = () => { const v = inp.value.trim(); if (!v){ inp.focus(); return; } S.name = v; save(); afterWelcome(); };
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+  show(h('div', {class:'intro'},
+    h('div', {class:'emoji'}, '🎧'),
+    h('h1', null, '聽音背單字'),
+    h('p', {class:'muted'}, '先聽、再拼、再寫，用耳朵把單字記起來。'),
+    h('div', {class:'card', style:'text-align:left'},
+      h('label', {class:'field'}, h('span', null, '你的名字'), inp),
+      h('button', {class:'btn primary block', onclick: go}, '開始'))
+  ));
+  setTimeout(() => inp.focus(), 50);
+}
+
+/* ========== 練習流程 ========== */
+const ROUNDS = {
+  1: { name:'聽音猜意思', emoji:'👂', desc:'先聽發音，不看拼字，選出它的中文意思。' },
+  2: { name:'音節拼讀', emoji:'🧩', desc:'看著音節聽一次，再把音節照順序拼回來。' },
+  3: { name:'聽寫', emoji:'✍️', desc:'只聽發音，把單字拼出來。' },
+};
+function startSession(ids, extra){
+  ids = ids.filter(i => S.words[i]);
+  if (!ids.length){ toast('沒有可以練習的字'); return; }
+  const res = {}; ids.forEach(i => res[i] = {});
+  S.session = { ids, extra: !!extra, round:1, queue: shuffle(ids.slice()), idx:0, res, stars:0, intro:true };
+  save(); renderSession();
+}
+function renderSession(){
+  const ss = S.session;
+  if (!ss) return renderHome();
+  if (ss.intro) return renderIntro();
+  if (ss.idx >= ss.queue.length) return nextRound();
+  const id = ss.queue[ss.idx], w = S.words[id];
+  if (!w){ ss.idx++; save(); return renderSession(); }
+  if (!ss.res[id]) ss.res[id] = {};
+  if (ss.round === 1) renderR1(w);
+  else if (ss.round === 2) renderR2(w);
+  else renderR3(w);
+}
+function nextRound(){
+  const ss = S.session;
+  if (ss.round >= 3) return finishSession();
+  ss.round++; ss.queue = shuffle(ss.ids.filter(i => S.words[i])); ss.idx = 0; ss.intro = true;
+  save(); renderSession();
+}
+function advance(){ S.session.idx++; save(); renderSession(); }
+function topbar(){
+  const ss = S.session, r = ROUNDS[ss.round];
+  const pct = ss.queue.length ? Math.round(ss.idx / ss.queue.length * 100) : 0;
+  return [
+    h('div', {class:'topbar'},
+      h('button', {class:'iconbtn', 'aria-label':'離開', onclick: () => { window.speechSynthesis && speechSynthesis.cancel(); renderHome(); }}, '✕'),
+      h('div', {class:'title'}, `第 ${ss.round} 關：${r.name}`),
+      h('div', {class:'muted small'}, `${Math.min(ss.idx + 1, ss.queue.length)} / ${ss.queue.length}`)),
+    h('div', {class:'progress'}, h('i', {style:`width:${pct}%`}))
+  ];
+}
+function renderIntro(){
+  const ss = S.session, r = ROUNDS[ss.round];
+  show(h('div', null,
+    h('div', {class:'topbar'},
+      h('button', {class:'iconbtn', 'aria-label':'離開', onclick: renderHome}, '✕'),
+      h('div', {class:'title'}, `共 ${ss.ids.length} 個字`)),
+    h('div', {class:'intro'},
+      h('div', {class:'emoji'}, r.emoji),
+      h('div', {class:'tag'}, `第 ${ss.round} / 3 關`),
+      h('h1', null, r.name),
+      h('p', {class:'muted'}, r.desc),
+      h('button', {class:'btn primary block', onclick: () => { ss.intro = false; save(); renderSession(); }}, '開始'))
+  ));
+}
+
+/* 第 1 關：聽音猜意思 */
+function makeOptions(w){
+  const seen = new Set([w.zh]), others = [];
+  shuffle(Object.values(S.words).filter(x => x.id !== w.id)).forEach(x => {
+    if (others.length < 3 && x.zh && !seen.has(x.zh)){ seen.add(x.zh); others.push(x); }
+  });
+  return shuffle([w, ...others]);
+}
+function renderR1(w){
+  const ss = S.session, res = ss.res[w.id];
+  const opts = makeOptions(w);
+  const reveal = h('div');
+  const spk = h('button', {class:'speaker', 'aria-label':'播放', onclick: () => play()}, '🔊');
+  const play = (rate = 1) => speak(w.w, { rate, onstart: () => spk.classList.add('playing'), onend: () => spk.classList.remove('playing') });
+  let answered = false;
+  const next = h('button', {class:'btn primary block', onclick: advance}, '下一個 →');
+  const finish = (ok) => {
+    if (res.r1 == null) res.r1 = ok;
+    save();
+    reveal.replaceChildren(wordCard(w), next);
+    setTimeout(() => reveal.scrollIntoView({behavior:'smooth', block:'start'}), 60);
+  };
+  const optsEl = h('div', {class:'opts'}, opts.map(o => h('button', {class:'opt', onclick: e => {
+    if (answered) return; answered = true;
+    const ok = o.id === w.id;
+    e.currentTarget.classList.add(ok ? 'good' : 'bad');
+    if (!ok) [...optsEl.children][opts.indexOf(w)].classList.add('good');
+    sfx(ok); finish(ok);
+  }}, o.zh)));
+  show(h('div', null, topbar(),
+    spk,
+    h('div', {class:'row', style:'justify-content:center'},
+      h('button', {class:'btn small', onclick: () => play(0.6)}, '🐢 慢速')),
+    h('div', {class:'prompt'}, opts.length > 1 ? '聽聽看，這是什麼意思？' : '聽聽看這個字'),
+    opts.length > 1 ? optsEl : null,
+    reveal));
+  if (opts.length < 2){ answered = true; finish(true); }
+  play();
+}
+
+/* 第 2 關：音節拼讀 */
+function renderR2(w){
+  const ss = S.session, res = ss.res[w.id];
+  const chunks = chunksOf(w);
+  // 先看＋聽
+  const sylEl = h('div', {class:'syl'}, chunks.map(c => h('span', null, c)));
+  const hl = i => [...sylEl.children].forEach((s, k) => s.classList.toggle('on', k === i));
+  const listen = () => speakHighlight(w.w, chunks, hl);
+  show(h('div', null, topbar(),
+    h('div', {class:'zh', style:'margin:10px 0'}, w.zh),
+    h('div', {class:'card center'},
+      h('div', {class:'muted small'}, '看著音節，聽發音'),
+      sylEl,
+      h('button', {class:'btn small', style:'margin-top:8px', onclick: listen}, '🔊 再聽一次')),
+    h('button', {class:'btn primary block', onclick: build}, '我記住了，來拼拼看 →')));
+  listen();
+
+  function build(){
+    let built = 0, errors = 0, done = false;
+    const slots = chunks.map(() => h('div', {class:'slot'}));
+    let order = chunks.map((c, i) => i);
+    if (chunks.length > 1){ let tries = 0; do { shuffle(order); tries++; } while (order.every((v, i) => v === i) && tries < 10); }
+    const fb = h('div', {class:'feedback'});
+    const after = h('div');
+    const tiles = order.map(i => {
+      const t = h('button', {class:'tile', onclick: () => tap(t, chunks[i])}, chunks[i]);
+      return t;
+    });
+    const hlSlots = i => slots.forEach((s, k) => s.classList.toggle('on', k === i));
+    function tap(t, text){
+      if (done || t.classList.contains('used')) return;
+      if (text.toLowerCase() === chunks[built].toLowerCase()){
+        t.classList.add('used'); tiles.forEach(x => x.classList.remove('hint'));
+        slots[built].textContent = chunks[built]; slots[built].classList.add('filled');
+        built++;
+        if (built === chunks.length){
+          done = true;
+          if (res.r2 == null) res.r2 = errors === 0;
+          save(); sfx(true);
+          fb.className = 'feedback good'; fb.textContent = errors === 0 ? '完美！' : '拼好了！';
+          speak(w.w);
+          after.replaceChildren(h('div', {class:'word'}, w.w), h('button', {class:'btn primary block', onclick: advance}, '下一個 →'));
+        }
+      } else {
+        errors++; sfx(false);
+        t.classList.remove('shake'); void t.offsetWidth; t.classList.add('shake');
+        fb.className = 'feedback bad'; fb.textContent = '再聽聽看順序';
+        if (errors >= 2){
+          const want = tiles.find(x => !x.classList.contains('used') && x.textContent.toLowerCase() === chunks[built].toLowerCase());
+          if (want) want.classList.add('hint');
+        }
+      }
+    }
+    show(h('div', null, topbar(),
+      h('div', {class:'zh', style:'margin:10px 0'}, w.zh),
+      h('div', {class:'slots'}, slots),
+      h('div', {class:'row', style:'justify-content:center'},
+        h('button', {class:'btn small', onclick: () => speakHighlight(w.w, chunks, hlSlots)}, '🔊 聽順序')),
+      h('div', {class:'tiles'}, tiles),
+      fb, after));
+  }
+}
+
+/* 第 3 關：聽寫 */
+const norm = s => s.toLowerCase().replace(/[’‘`]/g, "'").replace(/\s+/g, ' ').trim();
+function renderR3(w){
+  const ss = S.session, res = ss.res[w.id];
+  const practice = res.r3 != null; // 錯過一次的字，再練一次
+  const answer = norm(w.w);
+  let tries = 0, done = false, revealed = false;
+  const spk = h('button', {class:'speaker', 'aria-label':'播放', onclick: () => play()}, '🔊');
+  const play = (rate = 1) => speak(w.w, { rate, onstart: () => spk.classList.add('playing'), onend: () => spk.classList.remove('playing') });
+  const inp = h('input', {class:'dict', type:'text', autocomplete:'off', autocorrect:'off', autocapitalize:'none',
+    spellcheck:'false', enterkeyhint:'done', 'aria-label':'輸入拼字', placeholder: practice ? '再拼一次' : ''});
+  const hint = h('div');
+  const fb = h('div', {class:'feedback'});
+  const after = h('div');
+  const okBtn = h('button', {class:'btn primary block', onclick: submit}, '確定');
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); submit(); } });
+
+  function diffView(val){
+    const a = [...answer], v = [...val];
+    const n = Math.max(a.length, v.length);
+    const spans = [];
+    for (let i = 0; i < n; i++){
+      const ch = v[i] == null ? '_' : v[i];
+      spans.push(h('span', {class: v[i] === a[i] ? 'g' : 'x'}, ch === ' ' ? '␣' : ch));
+    }
+    return h('div', {class:'letters'}, spans);
+  }
+  function hintView(){
+    return h('div', null,
+      h('div', {class:'muted small center'}, `提示：第一個字母是「${w.w[0]}」，共 ${[...w.w].length} 個字母`),
+      h('div', {class:'letters'}, [...w.w].map((c, i) => h('span', null, i === 0 ? c : (c === ' ' ? '␣' : ' ')))));
+  }
+  function grade(ok){
+    if (res.r3 != null) return;
+    res.r3 = ok;
+    gradeWord(w.id);
+    if (!ok && !res.again){ res.again = true; ss.queue.push(w.id); }
+    save();
+  }
+  function submit(){
+    if (done) return;
+    const val = norm(inp.value);
+    if (!val){ inp.focus(); return; }
+    if (val === answer){
+      done = true;
+      const first = tries === 0 && !practice;
+      grade(tries === 0);
+      sfx(true);
+      fb.className = 'feedback good';
+      fb.textContent = practice ? '這次拼對了！' : revealed ? '照著拼對了，下次加油！' : first ? '答對了！⭐' : '差一點，拼對了！';
+      inp.disabled = true; okBtn.remove(); hint.replaceChildren();
+      speak(w.w);
+      after.replaceChildren(wordCard(w, {noEx:true}), h('button', {class:'btn primary block', onclick: advance}, '下一個 →'));
+      setTimeout(() => after.scrollIntoView({behavior:'smooth', block:'start'}), 60);
+      return;
+    }
+    tries++; sfx(false);
+    inp.classList.remove('shake'); void inp.offsetWidth; inp.classList.add('shake');
+    grade(false);
+    if (tries === 1 && !practice){
+      fb.className = 'feedback bad'; fb.textContent = '不太對，再聽一次';
+      hint.replaceChildren(diffView(val), hintView());
+      play(0.7);
+    } else {
+      revealed = true;
+      fb.className = 'feedback bad'; fb.textContent = '答案在這裡，照著拼一次';
+      hint.replaceChildren(diffView(val), h('div', {class:'word'}, w.w), h('div', {class:'syl dots'},
+        chunksOf(w).flatMap((c, i) => i ? [h('span', null, '·'), h('span', null, c)] : [h('span', null, c)])));
+      speakHighlight(w.w, chunksOf(w), () => {});
+    }
+    inp.select();
+  }
+  show(h('div', null, topbar(),
+    spk,
+    h('div', {class:'row', style:'justify-content:center'}, h('button', {class:'btn small', onclick: () => play(0.6)}, '🐢 慢速')),
+    h('div', {class:'zh', style:'margin:8px 0 12px'}, w.zh),
+    inp, hint, fb, okBtn, after));
+  inp.focus();
+  play();
+}
+
+/* 評分＋排下次複習 */
+function gradeWord(id){
+  const ss = S.session, r = ss.res[id], w = S.words[id];
+  if (!w || r.graded) return;
+  r.graded = true;
+  const ok = r.r1 !== false && r.r2 !== false && r.r3 !== false;
+  r.ok = ok;
+  resetDaily();
+  const wasNew = w.box === 0;
+  if (ss.extra && !wasNew){
+    if (!ok){ w.box = 1; w.due = addDays(1); }
+  } else if (ok){
+    w.box = Math.min(6, w.box + 1); w.due = addDays(INTERVAL[w.box]);
+  } else {
+    w.box = 1; w.due = addDays(1);
+  }
+  if (wasNew) S.daily.newDone++;
+  w.seen = (w.seen || 0) + 1;
+  ok ? (w.right = (w.right || 0) + 1) : (w.wrong = (w.wrong || 0) + 1);
+  w.last = today();
+  if (ok){ S.stars++; ss.stars++; }
+}
+function finishSession(){
+  const ss = S.session;
+  ss.ids.forEach(id => { if (S.words[id] && !ss.res[id].graded){ ss.res[id].r3 = ss.res[id].r3 ?? true; gradeWord(id); } });
+  const t = today();
+  if (S.streak.last !== t){
+    S.streak.count = S.streak.last === addDays(-1) ? S.streak.count + 1 : 1;
+    S.streak.last = t;
+  }
+  const rows = ss.ids.filter(id => S.words[id]).map(id => ({ w: S.words[id], ok: ss.res[id].ok }));
+  const got = ss.stars;
+  S.session = null; save();
+  const right = rows.filter(r => r.ok).length;
+  show(h('div', null,
+    h('div', {class:'intro'},
+      h('div', {class:'emoji'}, right === rows.length ? '🏆' : right >= rows.length / 2 ? '🎉' : '💪'),
+      h('h1', null, '練習完成！'),
+      h('div', {class:'stars'}, got ? '⭐'.repeat(Math.min(got, 10)) + (got > 10 ? ` ×${got}` : '') : '—'),
+      h('p', {class:'muted'}, `全對 ${right} / ${rows.length} 個字。沒全對的字，明天會再出現。`)),
+    h('div', {class:'card list'}, rows.map(r => h('div', {class:'item'},
+      h('span', {style:'font-size:22px'}, r.ok ? '✅' : '🔁'),
+      h('div', {class:'grow'}, h('div', {class:'w'}, r.w.w), h('div', {class:'muted small'}, r.w.zh)),
+      h('button', {class:'iconbtn', 'aria-label':'播放', onclick: () => speak(r.w.w)}, '🔊')))),
+    h('button', {class:'btn primary block', onclick: renderHome}, '回首頁')));
+}
+
+/* ========== 單字本 ========== */
+function renderBook(){
+  const q = h('input', {class:'text', placeholder:'搜尋英文或中文', type:'search'});
+  const listEl = h('div', {class:'card list'});
+  const draw = () => {
+    const s = q.value.trim().toLowerCase();
+    const words = Object.values(S.words).filter(w => !s || w.w.toLowerCase().includes(s) || (w.zh || '').includes(s))
+      .sort((a, b) => b.added - a.added);
+    listEl.replaceChildren(...(words.length ? words.map(w => {
+      const [lt, lc] = LEVEL(w.box);
+      return h('div', {class:'item'},
+        h('button', {class:'grow', style:'text-align:left', onclick: () => openWord(w.id, draw)},
+          h('div', {class:'w'}, w.w), h('div', {class:'muted small'}, w.zh)),
+        h('span', {class:`lvl ${lc}`}, lt),
+        h('button', {class:'iconbtn', 'aria-label':'播放', onclick: () => speak(w.w)}, '🔊'));
+    }) : [h('div', {class:'muted center', style:'padding:20px'}, Object.keys(S.words).length ? '找不到' : '還沒有單字')]));
+  };
+  q.addEventListener('input', draw);
+  show(h('div', null,
+    h('div', {class:'topbar'},
+      h('button', {class:'iconbtn', 'aria-label':'返回', onclick: renderHome}, '‹'),
+      h('div', {class:'title'}, `單字本（${Object.keys(S.words).length}）`)),
+    q, listEl));
+  draw();
+}
+let sheetEl = null;
+function closeSheet(){ if (sheetEl){ sheetEl.remove(); sheetEl = null; } }
+function openSheet(content){
+  closeSheet();
+  sheetEl = h('div', {class:'overlay', onclick: e => { if (e.target === sheetEl) closeSheet(); }}, h('div', {class:'sheet'}, content));
+  document.body.append(sheetEl);
+}
+function openWord(id, onChange){
+  const w = S.words[id]; if (!w) return;
+  const [lt, lc] = LEVEL(w.box);
+  openSheet(h('div', null,
+    h('div', {class:'row'},
+      h('span', {class:`lvl ${lc}`}, lt),
+      h('span', {class:'muted small grow'}, w.due && w.box ? `下次複習：${w.due}` : '還沒練過'),
+      h('button', {class:'iconbtn', 'aria-label':'關閉', onclick: closeSheet}, '✕')),
+    wordCard(w),
+    h('div', {class:'row'},
+      h('button', {class:'btn small', onclick: () => { w.box = 0; w.due = null; save(); closeSheet(); onChange && onChange(); toast('已設為新字'); }}, '重新學這個字'),
+      h('span', {class:'grow'}),
+      h('button', {class:'btn small danger', onclick: () => { if (confirm(`刪除「${w.w}」？`)){ delete S.words[id]; save(); closeSheet(); onChange && onChange(); } }}, '刪除'))));
+}
+
+/* ========== 匯入單字包 ========== */
+function b64urlEncode(bytes){
+  let s = ''; const CH = 0x8000;
+  for (let i = 0; i < bytes.length; i += CH) s += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
+  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function b64urlDecode(str){
+  str = str.replace(/-/g, '+').replace(/_/g, '/'); while (str.length % 4) str += '=';
+  const bin = atob(str), out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+async function pipe(bytes, stream){ return new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(stream)).arrayBuffer()); }
+async function encodeObj(obj){
+  const bytes = new TextEncoder().encode(JSON.stringify(obj));
+  if ('CompressionStream' in window){ try { return '1' + b64urlEncode(await pipe(bytes, new CompressionStream('deflate-raw'))); } catch (e) {} }
+  return '0' + b64urlEncode(bytes);
+}
+async function decodeCode(raw){
+  let code = String(raw || '').trim();
+  const m = code.match(/(?:pack|backup)=([A-Za-z0-9_\-]+)/);
+  if (m) code = m[1];
+  code = code.replace(/\s+/g, '');
+  if (code.length < 4) throw new Error('代碼太短，請確認有完整複製');
+  const ver = code[0];
+  let bytes;
+  try { bytes = b64urlDecode(code.slice(1)); } catch (e) { throw new Error('看不懂這個代碼，請確認有完整複製'); }
+  if (ver === '1'){
+    if (!('DecompressionStream' in window)) throw new Error('這台裝置的系統太舊，無法讀取（需要 iOS 16.4 以上）');
+    try { bytes = await pipe(bytes, new DecompressionStream('deflate-raw')); } catch (e) { throw new Error('代碼不完整，請重新複製'); }
+  } else if (ver !== '0') throw new Error('看不懂這個代碼');
+  try { return JSON.parse(new TextDecoder().decode(bytes)); } catch (e) { throw new Error('代碼內容有誤'); }
+}
+function cleanPack(p){
+  if (!p || !Array.isArray(p.words)) throw new Error('這不是單字包');
+  const words = p.words.filter(x => x && typeof x.w === 'string' && x.w.trim() && typeof x.zh === 'string')
+    .map(x => ({
+      w: x.w.trim(), zh: x.zh.trim(), pos: typeof x.pos === 'string' ? x.pos : '',
+      s: Array.isArray(x.s) ? x.s.map(String) : [],
+      ex: Array.isArray(x.ex) ? x.ex.filter(e => e && typeof e.en === 'string').map(e => ({ use: String(e.use || ''), en: e.en, zh: String(e.zh || '') })) : []
+    }));
+  if (!words.length) throw new Error('單字包裡沒有單字');
+  return { name: String(p.name || '單字包'), words };
+}
+async function copyText(text){
+  try { await navigator.clipboard.writeText(text); return true; }
+  catch (e) {
+    const ta = h('textarea', {style:'position:fixed;top:-1000px'}); ta.value = text; document.body.append(ta);
+    ta.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (_) {} ta.remove(); return ok;
+  }
+}
+function renderImport(){
+  const ta = h('textarea', {class:'text', placeholder:'把單字包連結或代碼貼在這裡'});
+  const go = async () => {
+    try {
+      const obj = await decodeCode(ta.value);
+      if (obj && obj.t === 'backup') return confirmRestore(obj);
+      previewPack(obj);
+    } catch (e) { toast(e.message); }
+  };
+  show(h('div', null,
+    h('div', {class:'topbar'},
+      h('button', {class:'iconbtn', 'aria-label':'返回', onclick: renderHome}, '‹'),
+      h('div', {class:'title'}, '匯入單字')),
+    h('div', {class:'card'},
+      h('h2', null, '貼上單字包'),
+      h('p', {class:'muted small', style:'margin-top:0'}, '單字包請爸爸用 Claude 製作：把課本照片或單字清單傳給 Claude，就會得到一個連結。'),
+      ta,
+      h('div', {class:'row wrap', style:'margin-top:10px'},
+        navigator.clipboard && navigator.clipboard.readText ? h('button', {class:'btn small', onclick: async () => {
+          try { ta.value = await navigator.clipboard.readText(); go(); } catch (e) { toast('無法讀取剪貼簿，請長按輸入框貼上'); }
+        }}, '📋 從剪貼簿貼上') : null,
+        h('span', {class:'grow'}),
+        h('button', {class:'btn primary', onclick: go}, '匯入'))),
+    h('div', {class:'card'},
+      h('h2', null, '還沒有單字包？'),
+      h('p', {class:'muted small', style:'margin-top:0'}, '先用 8 個範例單字試玩看看。'),
+      h('button', {class:'btn block', onclick: () => previewPack(DEMO)}, '試試範例單字包'))));
+}
+function previewPack(raw, fromLink){
+  let pack;
+  try { pack = cleanPack(raw); } catch (e) { toast(e.message); return renderImport(); }
+  const fresh = pack.words.filter(x => !S.words[x.w.toLowerCase()]).length;
+  const upd = pack.words.length - fresh;
+  const linkHint = fromLink && isIOS && !isStandalone();
+  show(h('div', null,
+    h('div', {class:'topbar'},
+      h('button', {class:'iconbtn', 'aria-label':'返回', onclick: renderHome}, '‹'),
+      h('div', {class:'title'}, '單字包')),
+    h('div', {class:'card'},
+      h('h2', null, pack.name),
+      h('div', {class:'muted small'}, `共 ${pack.words.length} 個字` + (upd ? `（新的 ${fresh} 個，已有 ${upd} 個會更新內容、保留進度）` : '')),
+      h('div', {class:'list', style:'margin-top:8px'}, pack.words.map(x => h('div', {class:'item'},
+        h('div', {class:'grow'}, h('div', {class:'w'}, x.w), h('div', {class:'muted small'}, x.zh)),
+        S.words[x.w.toLowerCase()] ? h('span', {class:'lvl l1'}, '已有') : null,
+        h('button', {class:'iconbtn', 'aria-label':'播放', onclick: () => speak(x.w)}, '🔊'))))),
+    linkHint ? h('div', {class:'banner'}, h('div', null,
+      h('b', null, '用主畫面的 app 練習嗎？'), h('br'),
+      'iPhone／iPad 主畫面的 app 和 Safari 是分開存檔的。請按下面「複製代碼」，再打開主畫面的 app → 匯入單字 → 貼上。',
+      h('div', {style:'margin-top:8px'}, h('button', {class:'btn small', onclick: async () => {
+        const ok = await copyText(location.href); toast(ok ? '已複製，去主畫面的 app 貼上吧' : '複製失敗，請長按網址列複製');
+      }}, '📋 複製代碼')))) : null,
+    h('button', {class:'btn primary block', onclick: () => {
+      const added = importPack(pack);
+      if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+      toast(`匯入完成：新增 ${added} 個字`);
+      renderHome();
+    }}, linkHint ? '匯入到這裡（Safari）' : `匯入 ${pack.words.length} 個字`)));
+}
+function importPack(pack){
+  let added = 0; const base = Date.now();
+  pack.words.forEach((x, i) => {
+    const id = x.w.toLowerCase();
+    const old = S.words[id];
+    if (old){ Object.assign(old, { w:x.w, zh:x.zh, pos:x.pos, s:x.s, ex:x.ex }); }
+    else { S.words[id] = { id, w:x.w, zh:x.zh, pos:x.pos, s:x.s, ex:x.ex, box:0, due:null, added: base + i, seen:0, right:0, wrong:0, pack: pack.name }; added++; }
+  });
+  save(); return added;
+}
+
+/* ========== 設定與備份 ========== */
+function renderSettings(){
+  const st = S.settings;
+  const name = h('input', {class:'text', value:S.name, maxlength:'12'});
+  name.addEventListener('change', () => { const v = name.value.trim(); if (v){ S.name = v; save(); } });
+  const rateLabel = h('b', null, st.rate.toFixed(2));
+  const rate = h('input', {type:'range', min:'0.5', max:'1.2', step:'0.05', value:String(st.rate)});
+  rate.addEventListener('input', () => { st.rate = +rate.value; rateLabel.textContent = st.rate.toFixed(2); save(); });
+  const sel = (key, vals, unit) => {
+    const s = h('select', {class:'text'}, vals.map(v => h('option', {value:String(v), selected: v === st[key]}, `${v} ${unit}`)));
+    s.addEventListener('change', () => { st[key] = +s.value; save(); });
+    return s;
+  };
+  loadVoices();
+  const voiceSel = h('select', {class:'text'},
+    h('option', {value:''}, '自動選擇'),
+    voices.map(v => h('option', {value:v.voiceURI, selected: v.voiceURI === st.voice}, `${v.name}（${v.lang}）`)));
+  voiceSel.addEventListener('change', () => { st.voice = voiceSel.value; save(); speak('Hello! Let’s learn some words.'); });
+  const sfxBox = h('input', {type:'checkbox', checked: st.sfx, style:'width:24px;height:24px'});
+  sfxBox.addEventListener('change', () => { st.sfx = sfxBox.checked; save(); });
+  const restoreTa = h('textarea', {class:'text', placeholder:'貼上備份代碼'});
+  const fileIn = h('input', {type:'file', accept:'.json,application/json,text/plain', style:'display:none'});
+  fileIn.addEventListener('change', async () => {
+    const f = fileIn.files[0]; if (!f) return;
+    try { const txt = await f.text(); let obj; try { obj = JSON.parse(txt); } catch (e) { obj = await decodeCode(txt); } confirmRestore(obj); }
+    catch (e) { toast('讀不懂這個檔案'); }
+  });
+  show(h('div', null,
+    h('div', {class:'topbar'},
+      h('button', {class:'iconbtn', 'aria-label':'返回', onclick: renderHome}, '‹'),
+      h('div', {class:'title'}, '設定')),
+    h('div', {class:'card'},
+      h('label', {class:'field'}, h('span', null, '名字'), name),
+      h('label', {class:'field'}, h('span', null, '發音速度 '), rateLabel, rate),
+      h('label', {class:'field'}, h('span', null, '聲音'), voiceSel),
+      h('button', {class:'btn small', onclick: () => speak('beautiful')}, '🔊 試聽'),
+      h('label', {class:'field'}, h('span', null, '每天新字數量'), sel('newPerDay', [3, 5, 8, 10, 15, 20], '個')),
+      h('label', {class:'field'}, h('span', null, '每次練習最多'), sel('sessionMax', [5, 8, 10, 12, 15, 20], '個字')),
+      h('label', {class:'row', style:'margin-top:8px'}, sfxBox, '答對答錯的音效')),
+    h('div', {class:'card'},
+      h('h2', null, '備份'),
+      h('p', {class:'muted small', style:'margin-top:0'}, '進度存在這台裝置裡。偶爾備份一次，換裝置或資料不見時可以還原。'),
+      h('div', {class:'row wrap'},
+        h('button', {class:'btn small', onclick: async () => {
+          const code = await encodeObj({ t:'backup', v:1, at: new Date().toISOString(), data: S });
+          const ok = await copyText(code); toast(ok ? '備份代碼已複製，可以貼到記事本或傳給爸爸保存' : '複製失敗');
+        }}, '📋 複製備份代碼'),
+        h('button', {class:'btn small', onclick: () => {
+          const blob = new Blob([JSON.stringify({ t:'backup', v:1, at: new Date().toISOString(), data: S })], {type:'application/json'});
+          const a = h('a', {href: URL.createObjectURL(blob), download: `單字備份-${S.name}-${today()}.json`});
+          document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+        }}, '💾 下載備份檔')),
+      h('h2', {style:'margin-top:16px'}, '還原'),
+      restoreTa,
+      h('div', {class:'row wrap', style:'margin-top:10px'},
+        h('button', {class:'btn small', onclick: () => fileIn.click()}, '選擇備份檔'), fileIn,
+        h('span', {class:'grow'}),
+        h('button', {class:'btn small primary', onclick: async () => {
+          try { confirmRestore(await decodeCode(restoreTa.value)); } catch (e) { toast(e.message); }
+        }}, '還原'))),
+    h('div', {class:'card'},
+      h('button', {class:'btn small danger', onclick: () => {
+        if (confirm('確定要清除所有單字和進度嗎？') && confirm('真的要清除嗎？這個動作無法復原。')){
+          localStorage.removeItem(KEY); S = defaults(); save(); renderHome();
+        }
+      }}, '清除所有資料')),
+    h('p', {class:'muted small center'}, `聽音背單字 v${APP_VERSION}`)));
+}
+function confirmRestore(obj){
+  if (!obj || obj.t !== 'backup' || !obj.data || typeof obj.data.words !== 'object'){ toast('這不是備份代碼'); return; }
+  const n = Object.keys(obj.data.words).length;
+  if (!confirm(`要用這份備份（${obj.data.name || ''}，${n} 個字）取代目前的資料嗎？`)) return;
+  const d = defaults();
+  S = Object.assign(d, obj.data, { settings: Object.assign(d.settings, obj.data.settings || {}) });
+  save(); toast('還原完成'); renderHome();
+}
+
+/* ========== 範例單字包 ========== */
+const DEMO = {"name":"範例單字包","words":[
+ {"w":"adventure","s":["ad","ven","ture"],"pos":"n.","zh":"冒險；奇遇","ex":[
+   {"use":"名詞：冒險經歷","en":"Our trip to the mountains was a real *adventure*.","zh":"我們去山上的旅行真是一場冒險。"},
+   {"use":"當形容詞用：冒險的","en":"I love reading *adventure* stories.","zh":"我喜歡讀冒險故事。"}]},
+ {"w":"interrupt","s":["in","ter","rupt"],"pos":"v.","zh":"打斷；中斷","ex":[
+   {"use":"打斷別人說話","en":"Please don't *interrupt* me when I'm talking.","zh":"我說話時請不要打斷我。"},
+   {"use":"使（某件事）中斷","en":"The game was *interrupted* by heavy rain.","zh":"比賽因為大雨而中斷。"}]},
+ {"w":"delicious","s":["de","li","cious"],"pos":"adj.","zh":"美味的","ex":[
+   {"use":"食物好吃","en":"This chocolate cake is *delicious*!","zh":"這個巧克力蛋糕好好吃！"},
+   {"use":"味道很香","en":"A *delicious* smell came from the kitchen.","zh":"廚房飄來一陣好香的味道。"}]},
+ {"w":"beautiful","s":["beau","ti","ful"],"pos":"adj.","zh":"美麗的；很棒的","ex":[
+   {"use":"外表美麗","en":"She has a *beautiful* smile.","zh":"她有美麗的笑容。"},
+   {"use":"事物很棒","en":"What a *beautiful* day for a picnic!","zh":"今天真是野餐的好天氣！"}]},
+ {"w":"ship","s":["sh","ip"],"pos":"n./v.","zh":"船；運送","ex":[
+   {"use":"名詞：大船","en":"The *ship* sailed across the ocean.","zh":"那艘船橫越了大海。"},
+   {"use":"動詞：寄送貨物","en":"They will *ship* the package tomorrow.","zh":"他們明天會寄出包裹。"}]},
+ {"w":"sheep","s":["sh","eep"],"pos":"n.","zh":"綿羊","ex":[
+   {"use":"一隻羊","en":"A *sheep* is eating grass on the hill.","zh":"一隻綿羊正在山坡上吃草。"},
+   {"use":"很多隻羊（單複數同形）","en":"The farmer has twenty *sheep*.","zh":"那位農夫有二十隻綿羊。"}]},
+ {"w":"run","s":["r","un"],"pos":"v.","zh":"跑；經營；運轉","ex":[
+   {"use":"跑步","en":"I *run* in the park every morning.","zh":"我每天早上在公園跑步。"},
+   {"use":"經營（店、公司）","en":"My aunt *runs* a small bakery.","zh":"我阿姨經營一家小麵包店。"},
+   {"use":"（機器）運轉","en":"This old computer still *runs* well.","zh":"這台舊電腦還能正常運作。"}]},
+ {"w":"important","s":["im","por","tant"],"pos":"adj.","zh":"重要的","ex":[
+   {"use":"事情很重要","en":"Sleep is *important* for your health.","zh":"睡眠對健康很重要。"},
+   {"use":"人物很重要","en":"He is an *important* person in our town.","zh":"他是我們鎮上的重要人物。"}]}
+]};
+
+/* ========== 啟動 ========== */
+const APP_VERSION = '1.0';
+async function boot(){
+  const m = location.hash.match(/(?:pack|backup)=([A-Za-z0-9_\-]+)/);
+  if (m && S.name){
+    try {
+      const obj = await decodeCode(location.hash);
+      if (obj && obj.t === 'backup'){ renderHome(); return confirmRestore(obj); }
+      return previewPack(obj, true);
+    } catch (e) { toast(e.message); }
+  }
+  renderHome(); // 還沒取名字時會先顯示歡迎畫面，取完名字後 afterWelcome() 會接著處理連結
+}
+function afterWelcome(){
+  if (/(?:pack|backup)=/.test(location.hash)) boot(); else renderHome();
+}
+window.addEventListener('hashchange', () => { if (/(?:pack|backup)=/.test(location.hash) && S.name) boot(); });
+boot();
+
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')){
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
