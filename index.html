@@ -89,6 +89,10 @@ h2{font-size:22px;margin:0 0 8px}
 .syl span.on{background:var(--hl);transform:scale(1.12)}
 .syl.dots span{background:transparent;padding:0 2px;font-size:22px;font-weight:700;color:var(--muted)}
 .zh{text-align:center;font-size:22px;font-weight:700}
+.forms{text-align:center;font-size:16px;color:var(--muted);margin-top:2px}
+.exedit{border:2px dashed var(--line);border-radius:14px;padding:4px 12px 10px;margin:10px 0}
+.exedit .field{margin:8px 0}
+.list .pos{font-size:12px;margin:0 0 0 6px}
 .pos{display:inline-block;font-size:14px;color:var(--brand);background:var(--brand-soft);border-radius:8px;padding:0 8px;margin-right:6px;vertical-align:middle}
 .ex{border-top:1px dashed var(--line);padding:12px 0 4px;display:flex;gap:10px;align-items:flex-start}
 .ex .use{display:inline-block;font-size:13px;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:8px;padding:1px 8px;margin-bottom:4px}
@@ -276,10 +280,35 @@ function sfx(ok){
 
 /* ========== 單字資料 ========== */
 const LEVEL = b => b === 0 ? ['新字', 'l0'] : b <= 3 ? ['學習中', 'l1'] : ['學會了', 'l2'];
+/* 把音節對齊到單字上（自動補回片語中的空格與大小寫），對不上就回傳 null */
+function alignChunks(word, parts){
+  const out = []; let i = 0;
+  for (const p of parts){
+    const t = String(p).replace(/\s+/g, '');
+    if (!t) continue;
+    let seg = '', k = 0;
+    while (i < word.length && k < t.length){
+      const ch = word[i];
+      if (ch === ' '){ seg += ch; i++; continue; }
+      if (ch.toLowerCase() !== t[k].toLowerCase()) return null;
+      seg += ch; i++; k++;
+    }
+    if (k < t.length) return null;
+    while (i < word.length && word[i] === ' '){ seg += ' '; i++; }
+    out.push(seg);
+  }
+  return i === word.length && out.length ? out : null;
+}
+function parseSyl(str){
+  str = String(str || '').trim();
+  if (!str) return [];
+  const parts = /[·・\-|\/]/.test(str) ? str.split(/[·・\-|\/]/) : str.split(/\s+/);
+  return parts.map(x => x.trim()).filter(Boolean);
+}
+const posChip = w => w.pos ? h('span', {class:'pos'}, w.pos) : null;
 function chunksOf(w){
   const word = w.w;
-  let c = Array.isArray(w.s) && w.s.length ? w.s.filter(Boolean) : [word];
-  if (c.join('').toLowerCase() !== word.toLowerCase()) c = [word];
+  let c = Array.isArray(w.s) && w.s.length ? (alignChunks(word, w.s) || [word]) : [word];
   if (c.length === 1){
     if (word.length <= 1) c = [word];
     else if (word.length <= 4) c = word.split('');
@@ -301,7 +330,8 @@ function wordCard(w, opt = {}){
       h('button', {class:'iconbtn', 'aria-label':'播放', onclick: () => speak(w.w)}, '🔊')),
     h('div', {class:'row', style:'justify-content:center;gap:4px'}, sylEl,
       h('button', {class:'iconbtn small', 'aria-label':'慢速', style:'font-size:20px', onclick: () => speak(w.w, {rate:0.6})}, '🐢')),
-    h('div', {class:'zh'}, w.pos ? h('span', {class:'pos'}, w.pos) : null, w.zh),
+    h('div', {class:'zh'}, posChip(w), w.zh),
+    w.forms ? h('div', {class:'forms'}, w.forms) : null,
     opt.noEx ? null : (w.ex || []).map(ex => h('div', {class:'ex'},
       h('div', {class:'grow'},
         ex.use ? h('span', {class:'use'}, ex.use) : null,
@@ -513,7 +543,7 @@ function renderR2(w){
   const hl = i => [...sylEl.children].forEach((s, k) => s.classList.toggle('on', k === i));
   const listen = () => speakHighlight(w.w, chunks, hl);
   show(h('div', null, topbar(),
-    h('div', {class:'zh', style:'margin:10px 0'}, w.zh),
+    h('div', {class:'zh', style:'margin:10px 0'}, posChip(w), w.zh),
     h('div', {class:'card center'},
       h('div', {class:'muted small'}, '看著音節，聽發音'),
       sylEl,
@@ -558,7 +588,7 @@ function renderR2(w){
       }
     }
     show(h('div', null, topbar(),
-      h('div', {class:'zh', style:'margin:10px 0'}, w.zh),
+      h('div', {class:'zh', style:'margin:10px 0'}, posChip(w), w.zh),
       h('div', {class:'slots'}, slots),
       h('div', {class:'row', style:'justify-content:center'},
         h('button', {class:'btn small', onclick: () => speakHighlight(w.w, chunks, hlSlots)}, '🔊 聽順序')),
@@ -642,7 +672,7 @@ function renderR3(w){
   show(h('div', null, topbar(),
     spk,
     h('div', {class:'row', style:'justify-content:center'}, h('button', {class:'btn small', onclick: () => play(0.6)}, '🐢 慢速')),
-    h('div', {class:'zh', style:'margin:8px 0 12px'}, w.zh),
+    h('div', {class:'zh', style:'margin:8px 0 12px'}, posChip(w), w.zh),
     inp, hint, fb, okBtn, after));
   inp.focus();
   play();
@@ -707,7 +737,7 @@ function renderBook(){
       const [lt, lc] = LEVEL(w.box);
       return h('div', {class:'item'},
         h('button', {class:'grow', style:'text-align:left', onclick: () => openWord(w.id, draw)},
-          h('div', {class:'w'}, w.w), h('div', {class:'muted small'}, w.zh)),
+          h('div', null, h('span', {class:'w'}, w.w), posChip(w)), h('div', {class:'muted small'}, w.zh)),
         h('span', {class:`lvl ${lc}`}, lt),
         h('button', {class:'iconbtn', 'aria-label':'播放', onclick: () => speak(w.w)}, '🔊'));
     }) : [h('div', {class:'muted center', style:'padding:20px'}, Object.keys(S.words).length ? '找不到' : '還沒有單字')]));
@@ -716,7 +746,8 @@ function renderBook(){
   show(h('div', null,
     h('div', {class:'topbar'},
       h('button', {class:'iconbtn', 'aria-label':'返回', onclick: renderHome}, '‹'),
-      h('div', {class:'title'}, `單字本（${Object.keys(S.words).length}）`)),
+      h('div', {class:'title'}, `單字本（${Object.keys(S.words).length}）`),
+      Object.keys(S.words).length ? h('button', {class:'btn small', onclick: openShare}, '📤 分享') : null),
     q, listEl));
   draw();
 }
@@ -736,10 +767,118 @@ function openWord(id, onChange){
       h('span', {class:'muted small grow'}, w.due && w.box ? `下次複習：${w.due}` : '還沒練過'),
       h('button', {class:'iconbtn', 'aria-label':'關閉', onclick: closeSheet}, '✕')),
     wordCard(w),
-    h('div', {class:'row'},
+    h('div', {class:'row wrap'},
+      h('button', {class:'btn small primary', onclick: () => editSaved(id, onChange)}, '✏️ 編輯'),
       h('button', {class:'btn small', onclick: () => { w.box = 0; w.due = null; save(); closeSheet(); onChange && onChange(); toast('已設為新字'); }}, '重新學這個字'),
       h('span', {class:'grow'}),
       h('button', {class:'btn small danger', onclick: () => { if (confirm(`刪除「${w.w}」？`)){ delete S.words[id]; save(); closeSheet(); onChange && onChange(); } }}, '刪除'))));
+}
+/* 修改已匯入的字（保留練習進度） */
+function editSaved(id, onChange){
+  const old = S.words[id]; if (!old) return;
+  openEditor(old, {
+    title: '編輯單字',
+    onSave: nw => {
+      const newId = nw.w.toLowerCase();
+      if (newId !== id && S.words[newId]){ toast(`單字本裡已經有「${nw.w}」了`); return false; }
+      const rec = Object.assign({}, old, nw, { id: newId });
+      delete S.words[id]; S.words[newId] = rec;
+      const ss = S.session;
+      if (ss && newId !== id){
+        ss.ids = ss.ids.map(x => x === id ? newId : x);
+        ss.queue = ss.queue.map(x => x === id ? newId : x);
+        if (ss.res[id]){ ss.res[newId] = ss.res[id]; delete ss.res[id]; }
+      }
+      save(); toast('已儲存'); onChange && onChange();
+      setTimeout(() => openWord(newId, onChange), 0);
+    },
+    onDelete: () => { delete S.words[id]; save(); onChange && onChange(); }
+  });
+}
+
+/* ========== 單字編輯器 ========== */
+function openEditor(src, opt){
+  const d = JSON.parse(JSON.stringify(src || {}));
+  const input = (label, val, ph, extra) => {
+    const i = h('input', Object.assign({class:'text', value: val || '', placeholder: ph || '', autocapitalize:'none', autocorrect:'off', spellcheck:'false'}, extra || {}));
+    return [h('label', {class:'field'}, h('span', null, label), i), i];
+  };
+  const [fw, iw] = input('英文 *', d.w, '例如：sat');
+  const [fs, is] = input('音節（用 · 分開，可留空）', (d.s || []).map(x => x.trim()).join(' · '), '例如：s · at');
+  const [fp, ip] = input('詞性', d.pos, '例如：pp、v、cn、adv');
+  const [ff, iff] = input('三態（選填）', d.forms, '例如：sit – sat – sat');
+  const [fz, iz] = input('中文 *', d.zh, '例如：坐', {autocapitalize:'off'});
+  let exs = (d.ex || []).map(e => Object.assign({}, e));
+  const exBox = h('div');
+  const drawEx = () => {
+    exBox.replaceChildren(...exs.map((e, k) => {
+      const [a, ia] = input(`例句 ${k + 1}・用法`, e.use, '例如：已經坐了');
+      const [b, ib] = input('英文（用 *星號* 標出單字）', e.en, 'I have *sat* here.');
+      const [c, ic] = input('中文', e.zh, '我已經坐在這裡了。');
+      ia.oninput = () => e.use = ia.value; ib.oninput = () => e.en = ib.value; ic.oninput = () => e.zh = ic.value;
+      return h('div', {class:'exedit'}, a, b, c,
+        h('button', {class:'btn small danger', onclick: () => { exs.splice(k, 1); drawEx(); }}, '刪除這句'));
+    }));
+  };
+  drawEx();
+  const doSave = () => {
+    const w = iw.value.trim().replace(/\s+/g, ' ');
+    const zh = iz.value.trim();
+    if (!w){ toast('請填英文'); iw.focus(); return; }
+    if (!zh){ toast('請填中文'); iz.focus(); return; }
+    const parts = parseSyl(is.value);
+    let s = [];
+    if (parts.length){
+      const al = alignChunks(w, parts);
+      if (!al){ toast('音節拼起來跟英文不一樣，請檢查'); is.focus(); return; }
+      s = al;
+    }
+    const ex = exs.filter(e => (e.en || '').trim()).map(e => ({ use: (e.use || '').trim(), en: e.en.trim(), zh: (e.zh || '').trim() }));
+    if (ex.some(e => (e.en.match(/\*/g) || []).length % 2)){ toast('例句裡的 * 要成對'); return; }
+    const nw = { w, s, pos: ip.value.trim(), forms: iff.value.trim(), zh, ex };
+    if (opt.onSave(nw) !== false) closeSheet();
+  };
+  openSheet(h('div', null,
+    h('div', {class:'row'},
+      h('h2', {class:'grow', style:'margin:0'}, opt.title || '編輯單字'),
+      h('button', {class:'iconbtn', 'aria-label':'關閉', onclick: closeSheet}, '✕')),
+    fw, fs, fp, ff, fz, exBox,
+    h('button', {class:'btn small', onclick: () => { exs.push({use:'', en:'', zh:''}); drawEx(); }}, '＋ 新增例句'),
+    h('div', {class:'row', style:'margin-top:16px'},
+      opt.onDelete ? h('button', {class:'btn small danger', onclick: () => {
+        if (confirm(`刪除「${d.w || '這個字'}」？`)){ opt.onDelete(); closeSheet(); }
+      }}, '刪除這個字') : null,
+      h('span', {class:'grow'}),
+      h('button', {class:'btn primary', onclick: doSave}, '儲存'))));
+  if (!d.w) setTimeout(() => iw.focus(), 50);
+}
+
+/* ========== 分享單字包 ========== */
+function packFromWords(name, words){
+  return { t:'pack', name, words: words.sort((a, b) => a.added - b.added).map(w => ({ w:w.w, s:(w.s || []).map(x => x.trim()), pos:w.pos || '', forms:w.forms || '', zh:w.zh, ex:w.ex || [] })) };
+}
+function openShare(){
+  const all = Object.values(S.words);
+  const groups = {};
+  all.forEach(w => { const k = w.pack || '其他'; (groups[k] = groups[k] || []).push(w); });
+  const link = async (name, words) => {
+    const code = await encodeObj(packFromWords(name, words.slice()));
+    const url = location.origin + location.pathname + '#pack=' + code;
+    const ok = await copyText(url);
+    toast(ok ? `「${name}」的連結已複製，貼到另一台裝置的「匯入單字」` : '複製失敗');
+  };
+  openSheet(h('div', null,
+    h('div', {class:'row'},
+      h('h2', {class:'grow', style:'margin:0'}, '分享單字包'),
+      h('button', {class:'iconbtn', 'aria-label':'關閉', onclick: closeSheet}, '✕')),
+    h('p', {class:'muted small'}, '會用你修改過的內容產生新連結（不含練習進度）。'),
+    h('div', {class:'card list'},
+      Object.entries(groups).map(([name, ws]) => h('div', {class:'item'},
+        h('div', {class:'grow'}, h('div', {class:'w'}, name), h('div', {class:'muted small'}, `${ws.length} 個字`)),
+        h('button', {class:'btn small', onclick: () => link(name, ws)}, '📋 複製連結'))),
+      Object.keys(groups).length > 1 ? h('div', {class:'item'},
+        h('div', {class:'grow'}, h('div', {class:'w'}, '全部單字'), h('div', {class:'muted small'}, `${all.length} 個字`)),
+        h('button', {class:'btn small', onclick: () => link('全部單字', all)}, '📋 複製連結')) : null)));
 }
 
 /* ========== 匯入單字包 ========== */
@@ -778,14 +917,22 @@ async function decodeCode(raw){
 function cleanPack(p){
   if (!p || !Array.isArray(p.words)) throw new Error('這不是單字包');
   const words = p.words.filter(x => x && typeof x.w === 'string' && x.w.trim() && typeof x.zh === 'string')
-    .map(x => ({
+    .map(x => fixPos({
       w: x.w.trim(), zh: x.zh.trim(), pos: typeof x.pos === 'string' ? x.pos : '',
+      forms: typeof x.forms === 'string' ? x.forms : '',
       s: Array.isArray(x.s) ? x.s.map(String) : [],
       ex: Array.isArray(x.ex) ? x.ex.filter(e => e && typeof e.en === 'string').map(e => ({ use: String(e.use || ''), en: e.en, zh: String(e.zh || '') })) : []
     }));
   if (!words.length) throw new Error('單字包裡沒有單字');
   return { name: String(p.name || '單字包'), words };
 }
+/* 舊格式「p.p.｜sit – sat – sat」拆成詞性＋三態 */
+function fixPos(x){
+  const m = /^p\.p\.｜(.*)$/.exec(x.pos || '');
+  if (m && !x.forms){ x.pos = 'pp'; x.forms = m[1]; }
+  return x;
+}
+Object.values(S.words).forEach(fixPos);
 async function copyText(text){
   try { await navigator.clipboard.writeText(text); return true; }
   catch (e) {
@@ -821,31 +968,53 @@ function renderImport(){
       h('p', {class:'muted small', style:'margin-top:0'}, '先用 8 個範例單字試玩看看。'),
       h('button', {class:'btn block', onclick: () => previewPack(DEMO)}, '試試範例單字包'))));
 }
+let draft = null; // 匯入前正在預覽／修改的單字包
 function previewPack(raw, fromLink){
-  let pack;
-  try { pack = cleanPack(raw); } catch (e) { toast(e.message); return renderImport(); }
+  try { draft = cleanPack(raw); } catch (e) { toast(e.message); return renderImport(); }
+  draft.fromLink = !!fromLink;
+  drawPreview();
+}
+function drawPreview(){
+  const pack = draft;
+  const dupAt = (w, skip) => pack.words.findIndex((x, k) => k !== skip && x.w.toLowerCase() === w.toLowerCase());
+  const edit = k => openEditor(k == null ? null : pack.words[k], {
+    title: k == null ? '新增單字' : '編輯單字',
+    onSave: nw => {
+      if (dupAt(nw.w, k == null ? -1 : k) >= 0){ toast(`這個單字包裡已經有「${nw.w}」了`); return false; }
+      if (k == null) pack.words.push(nw); else pack.words[k] = nw;
+      drawPreview();
+    },
+    onDelete: k == null ? null : () => { pack.words.splice(k, 1); drawPreview(); }
+  });
   const fresh = pack.words.filter(x => !S.words[x.w.toLowerCase()]).length;
   const upd = pack.words.length - fresh;
-  const linkHint = fromLink && isIOS && !isStandalone();
+  const linkHint = pack.fromLink && isIOS && !isStandalone();
   show(h('div', null,
     h('div', {class:'topbar'},
-      h('button', {class:'iconbtn', 'aria-label':'返回', onclick: renderHome}, '‹'),
+      h('button', {class:'iconbtn', 'aria-label':'返回', onclick: () => { if (confirm('不匯入，直接離開嗎？')) renderHome(); }}, '‹'),
       h('div', {class:'title'}, '單字包')),
     h('div', {class:'card'},
       h('h2', null, pack.name),
-      h('div', {class:'muted small'}, `共 ${pack.words.length} 個字` + (upd ? `（新的 ${fresh} 個，已有 ${upd} 個會更新內容、保留進度）` : '')),
-      h('div', {class:'list', style:'margin-top:8px'}, pack.words.map(x => h('div', {class:'item'},
-        h('div', {class:'grow'}, h('div', {class:'w'}, x.w), h('div', {class:'muted small'}, x.zh)),
+      h('div', {class:'muted small'}, `共 ${pack.words.length} 個字` + (upd ? `（新的 ${fresh} 個，已有 ${upd} 個會更新內容、保留進度）` : '') + '。點 ✏️ 可以修改。'),
+      h('div', {class:'list', style:'margin-top:8px'}, pack.words.map((x, k) => h('div', {class:'item'},
+        h('button', {class:'grow', style:'text-align:left', onclick: () => edit(k)},
+          h('div', null, h('span', {class:'w'}, x.w), posChip(x)),
+          h('div', {class:'muted small'}, x.zh + (x.forms ? `｜${x.forms}` : ''))),
         S.words[x.w.toLowerCase()] ? h('span', {class:'lvl l1'}, '已有') : null,
-        h('button', {class:'iconbtn', 'aria-label':'播放', onclick: () => speak(x.w)}, '🔊'))))),
+        h('button', {class:'iconbtn', 'aria-label':'播放', onclick: () => speak(x.w)}, '🔊'),
+        h('button', {class:'iconbtn', 'aria-label':'修改', onclick: () => edit(k)}, '✏️')))),
+      h('button', {class:'btn small', style:'margin-top:10px', onclick: () => edit(null)}, '＋ 新增單字')),
     linkHint ? h('div', {class:'banner'}, h('div', null,
       h('b', null, '用主畫面的 app 練習嗎？'), h('br'),
       'iPhone／iPad 主畫面的 app 和 Safari 是分開存檔的。請按下面「複製代碼」，再打開主畫面的 app → 匯入單字 → 貼上。',
       h('div', {style:'margin-top:8px'}, h('button', {class:'btn small', onclick: async () => {
-        const ok = await copyText(location.href); toast(ok ? '已複製，去主畫面的 app 貼上吧' : '複製失敗，請長按網址列複製');
+        const code = await encodeObj({ t:'pack', name: pack.name, words: pack.words });
+        const ok = await copyText(location.origin + location.pathname + '#pack=' + code);
+        toast(ok ? '已複製（含你的修改），去主畫面的 app 貼上吧' : '複製失敗');
       }}, '📋 複製代碼')))) : null,
-    h('button', {class:'btn primary block', onclick: () => {
+    h('button', {class:'btn primary block', disabled: !pack.words.length, onclick: () => {
       const added = importPack(pack);
+      draft = null;
       if (location.hash) history.replaceState(null, '', location.pathname + location.search);
       toast(`匯入完成：新增 ${added} 個字`);
       renderHome();
@@ -856,8 +1025,8 @@ function importPack(pack){
   pack.words.forEach((x, i) => {
     const id = x.w.toLowerCase();
     const old = S.words[id];
-    if (old){ Object.assign(old, { w:x.w, zh:x.zh, pos:x.pos, s:x.s, ex:x.ex }); }
-    else { S.words[id] = { id, w:x.w, zh:x.zh, pos:x.pos, s:x.s, ex:x.ex, box:0, due:null, added: base + i, seen:0, right:0, wrong:0, pack: pack.name }; added++; }
+    if (old){ Object.assign(old, { w:x.w, zh:x.zh, pos:x.pos, forms:x.forms, s:x.s, ex:x.ex, pack: pack.name }); }
+    else { S.words[id] = { id, w:x.w, zh:x.zh, pos:x.pos, forms:x.forms, s:x.s, ex:x.ex, box:0, due:null, added: base + i, seen:0, right:0, wrong:0, pack: pack.name }; added++; }
   });
   save(); return added;
 }
@@ -969,7 +1138,7 @@ const DEMO = {"name":"範例單字包","words":[
 ]};
 
 /* ========== 啟動 ========== */
-const APP_VERSION = '1.0';
+const APP_VERSION = '1.1';
 async function boot(){
   const m = location.hash.match(/(?:pack|backup)=([A-Za-z0-9_\-]+)/);
   if (m && S.name){
